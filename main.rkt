@@ -69,8 +69,7 @@ E.g.:
 racket main.rkt \\
        -f '\\'(\"/home/bost/dev/notes/org-roam/20210805195404-guix.org\"
               \"/home/bost/dev/notes/org-roam/20210729234518-racket.org\")' \\
-       -p title
-"
+       -p title"
    #:once-each
    ;; TODO parameterize displayed color
    ;; TODO check if the case-sensitivity value is allowed
@@ -92,7 +91,6 @@ racket main.rkt \\
   ;; Thanks to https://stackoverflow.com/q/16266934 for a hint
   (define ns (namespace-anchor->namespace a))
   (define (files) (eval (call-with-input-string (files-prm) read) ns))
-  #;(printf "~a\n" (files))
 
   (define add-src-location-info #f)
 
@@ -134,7 +132,6 @@ racket main.rkt \\
                    (colorize lst ptrn)
                    (printf "\n\n")))
                strs)))
-    #;(lambda (p) (printf "~s\n" p) p)
     (curry map
            (lambda (f)
              (let ((strs (call-with-input-file f
