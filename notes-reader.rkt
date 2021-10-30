@@ -23,7 +23,9 @@
             (parse-notes src in))))
 
 (define (parse-note src in)
-  (regexp-try-match #px"^\\s+" in)
+  ;; Don't remove whitespace for better formatting (column alignment)
+  ;; See also `next-token`
+  #;(regexp-try-match #px"^\\s+" in)
   (if (eof-object? (peek-char in))
       eof
       (let ()
@@ -45,8 +47,10 @@
          (lio (if positions (- end (string-length substr)) -1)))
     lio))
 
-(define (next-token-x src in (peek? #f))
-  (skip-whitespace in)
+(define (next-token src in (peek? #f))
+  ;; Don't remove whitespace for better formatting (column alignment)
+  ;; See also `parse-note`
+  #;(skip-whitespace in)
   (define match-fn (if peek? regexp-match-peek regexp-try-match))
   (cond
     ;; note is a block of lines
@@ -72,9 +76,6 @@
      eof)
     (else
      (complain src in "unknown lexeme"))))
-
-(define (next-token src in (peek? #f))
-  (next-token-x src in peek?))
 
 (define (parse-note-content src in)
   (define first-token (next-token src in))
