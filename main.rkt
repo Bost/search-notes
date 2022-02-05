@@ -1,7 +1,8 @@
 #lang racket
 
 (module+ test
-  (require rackunit))
+  (require rackunit
+           racket/match))
 
 ;; Notice
 ;; To install (from within the package directory):
@@ -47,7 +48,7 @@
    ansi-color)
 
   (define pattern (make-parameter ""))
-  (define files-prm (make-parameter (list)))
+  (define matching-files (make-parameter ""))
 
   (define case-sensitive "i")
   (define case-insensitive "-i")
@@ -67,16 +68,18 @@
    #:usage-help
    "Search in note-file(s) for a pattern. Return note-block(s).
 E.g.:
-racket main.rkt \\
-       -f '\\'(\"/home/bost/dev/notes/org-roam/20210805195404-guix.org\"
-              \"/home/bost/dev/notes/org-roam/20210729234518-racket.org\")' \\
-       -p title"
+racket main.rkt -f shells -p title
+racket main.rkt -f \"shells|linux\" -p title
+"
    #:once-each
    ;; TODO parameterize displayed color
    ;; TODO check if the case-sensitivity value is allowed
-   [("-f" "--files") fs
-                     "A list of files to search through."
-                     (files-prm fs)]
+   ;; TODO crp: read /home/bost/dev/notes/org-roam/*utf8.org
+   ;; see also .spacemacs definition
+   [("-f" "--files") REGEX
+                     "Regexp matching a list of file-names in the org-roam
+directory to search in."
+                     (matching-files REGEX)]
    [("-c" "--case-sensitivity") CS
                                 (case-sensitivity-help-text)
                                 (case-sensitivity CS)]
@@ -91,7 +94,9 @@ racket main.rkt \\
   ;; the expression must be evaluated in a namespace.
   ;; Thanks to https://stackoverflow.com/q/16266934 for a hint
   (define ns (namespace-anchor->namespace a))
-  (define (files) (eval (call-with-input-string (files-prm) read) ns))
+
+  ;; this is the default location of the org-roam directory
+  (define dir (format "~a/org-roam/" (getenv "HOME")))
 
   (define add-src-location-info #f)
 
@@ -129,7 +134,8 @@ racket main.rkt \\
                                             (format "(?~a:~a)"
                                                     (case-sensitivity) ptrn))
                                            s)))
-                   (with-colors 'white (lambda () (color-displayln (car file-strs))))
+                   (with-colors 'white (lambda ()
+                                         (color-displayln (car file-strs))))
                    (colorize lst ptrn)
                    (printf "\n\n")))
                strs)))
@@ -147,5 +153,13 @@ racket main.rkt \\
                              (eval exp ns)))))
                (if (empty? strs)
                    (list f)
-                   (list f (string-join strs "\n\n")))))))
-   (files)))
+                   (list f (string-join strs "\n\n"))))))
+    (lambda (filter-fun)
+      "Return a list to files to search through."
+      (let ([all-files (for/list ([f (in-directory dir)])
+                         (path->string f))])
+        (filter filter-fun all-files)))
+    (lambda (regex)
+      "Return a predicate function."
+      (lambda (f) (regexp-match (format ".*(~a).*org" regex) f))))
+   (matching-files)))
