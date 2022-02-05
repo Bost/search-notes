@@ -54,11 +54,12 @@
 
   (define case-sensitivity (make-parameter case-sensitive))
 
-  (define csd (format "case-sensitive `~a`~a or case-insensitive `~a`~a search."
-                      case-sensitive
-                      (if (equal? case-sensitive (case-sensitivity)) " (default)" "")
-                      case-insensitive
-                      (if (equal? case-sensitive (case-sensitivity)) "" " (default)")))
+  (define case-sensitivity-help-text
+    (format "case-sensitive `~a`~a or case-insensitive `~a`~a search."
+            case-sensitive
+            (if (equal? case-sensitive (case-sensitivity)) " (default)" "")
+            case-insensitive
+            (if (equal? case-sensitive (case-sensitivity)) "" " (default)")))
 
   (command-line
    #:program "search-notes"
@@ -74,11 +75,11 @@ racket main.rkt \\
    ;; TODO parameterize displayed color
    ;; TODO check if the case-sensitivity value is allowed
    [("-f" "--files") fs
-                     "A list of file to search through."
+                     "A list of files to search through."
                      (files-prm fs)]
-   [("-c" "--case-sensitivity") cs
-                                (csd)
-                                (case-sensitivity cs)]
+   [("-c" "--case-sensitivity") CS
+                                (case-sensitivity-help-text)
+                                (case-sensitivity CS)]
    [("-p" "--pattern") NAME
                        "Search pattern"
                        (pattern NAME)]
