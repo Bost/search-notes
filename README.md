@@ -18,4 +18,6 @@ TODO Two search patterns means
 - search for block(s)
 - then search within the found block(s)
 
-TODO Find org-mode racket parser / language
+TODO Find org-mode racket parser / language: https://github.com/tgbugs/laundry
+
+TODO search in subdirectories
