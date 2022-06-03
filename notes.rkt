@@ -11,6 +11,7 @@
     ((notes
       text:string
       case-sensitivity:string
+      colorize-matches:boolean
       note:expr ...)
      (begin
        #`(begin

@@ -52,15 +52,17 @@
 
   (define case-sensitive "i")
   (define case-insensitive "-i")
-
   (define case-sensitivity (make-parameter case-sensitive))
-
   (define case-sensitivity-help-text
     (format "case-sensitive `~a`~a or case-insensitive `~a`~a search."
             case-sensitive
             (if (equal? case-sensitive (case-sensitivity)) " (default)" "")
             case-insensitive
             (if (equal? case-sensitive (case-sensitivity)) "" " (default)")))
+
+  (define colorize-matches (make-parameter #t))
+  (define colorize-matches-help-text
+    "If omitted the result is colorized")
 
   (command-line
    #:program "search-notes"
@@ -69,10 +71,12 @@
    "Search in note-file(s) for a pattern. Return note-block(s).
 E.g.:
 racket main.rkt -f shells -p title
+racket main.rkt -fp shells title
+racket main.rkt -n f shells -p title
+racket main.rkt -nfp shells title
 racket main.rkt -f \"shells|linux\" -p title
 "
    #:once-each
-   ;; TODO parameterize displayed color
    ;; TODO check if the case-sensitivity value is allowed
    ;; TODO crp: read /home/bost/dev/notes/org-roam/*utf8.org
    ;; see also .spacemacs definition
@@ -83,6 +87,9 @@ directory to search in."
    [("-c" "--case-sensitivity") CS
                                 (case-sensitivity-help-text)
                                 (case-sensitivity CS)]
+   [("-n" "--no-colors")
+                         (colorize-matches-help-text)
+                         (colorize-matches #f)]
    [("-p" "--pattern") NAME
                        "Search pattern"
                        (pattern NAME)]
@@ -110,15 +117,17 @@ directory to search in."
         ls
         (append (list (car ls) elem) (interpose elem (cdr ls)))))
 
-  (define (colorize ls pattern)
+  (define (colorize cm display-fn ls pattern)
     (match ls
-      [(list) (color-display "")]
-      [(list l) (color-display l)]
+      [(list) (display-fn "")]
+      [(list l) (display-fn l)]
       [_
        (let ((txt (car ls)))
-         (color-display txt)
-         (with-colors 'red (lambda () (color-display pattern)))
-         (colorize (cdr ls) pattern))]))
+         (display-fn txt)
+         (if cm
+             (with-colors 'red (lambda () (display-fn pattern)))
+             (display-fn pattern))
+         (colorize cm display-fn (cdr ls) pattern))]))
 
   ((compose
     (lambda (_) (display ""))
@@ -126,7 +135,10 @@ directory to search in."
            (lambda (file-strs)
              (let ((strs (cdr file-strs)))
                (unless (empty? strs)
-                 (let* ((s (string-join strs "\n"))
+                 (let* ((cm (colorize-matches))
+                        (fn-displayln (if cm color-displayln displayln))
+                        (fn-display   (if cm color-display display))
+                        (s (string-join strs "\n"))
                         (ptrn (pattern))
                         ;; TODO use regexp-match* instead of regexp-split.
                         ;; e.g. (regexp-match* #rx"(?i:x*)" "12X4x6")
@@ -134,9 +146,11 @@ directory to search in."
                                             (format "(?~a:~a)"
                                                     (case-sensitivity) ptrn))
                                            s)))
-                   (with-colors 'white (lambda ()
-                                         (color-displayln (car file-strs))))
-                   (colorize lst ptrn)
+                   (if cm
+                       (with-colors 'white (lambda ()
+                                             (fn-displayln (car file-strs))))
+                       (fn-displayln (car file-strs)))
+                   (colorize cm fn-display lst ptrn)
                    (printf "\n\n")))
                strs)))
     (curry map
@@ -149,7 +163,9 @@ directory to search in."
                                     (pattern)
                                     (cons
                                      (case-sensitivity)
-                                     (parse-notes add-src-location-info inf)))))
+                                     (cons
+                                      (colorize-matches)
+                                      (parse-notes add-src-location-info inf))))))
                              (eval exp ns)))))
                (if (empty? strs)
                    (list f)
