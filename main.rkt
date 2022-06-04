@@ -52,6 +52,7 @@
 
   (define case-sensitive "i")
   (define case-insensitive "-i")
+  ;; passed directly to the regex as a flag for case-sensitivity flag
   (define case-sensitivity (make-parameter case-sensitive))
   (define case-sensitivity-help-text
     (format "case-sensitive `~a`~a or case-insensitive `~a`~a search."
@@ -125,8 +126,8 @@ directory to search in."
        (let ((txt (car ls)))
          (display-fn txt)
          (if cm
-             (with-colors 'red (lambda () (display-fn pattern)))
-             (display-fn pattern))
+             (with-colors 'red (lambda () (color-display pattern)))
+             (display pattern))
          (colorize cm display-fn (cdr ls) pattern))]))
 
   ((compose
@@ -136,8 +137,6 @@ directory to search in."
              (let ((strs (cdr file-strs)))
                (unless (empty? strs)
                  (let* ((cm (colorize-matches))
-                        (fn-displayln (if cm color-displayln displayln))
-                        (fn-display   (if cm color-display display))
                         (s (string-join strs "\n"))
                         (ptrn (pattern))
                         ;; TODO use regexp-match* instead of regexp-split.
@@ -148,9 +147,9 @@ directory to search in."
                                            s)))
                    (if cm
                        (with-colors 'white (lambda ()
-                                             (fn-displayln (car file-strs))))
-                       (fn-displayln (car file-strs)))
-                   (colorize cm fn-display lst ptrn)
+                                             (color-displayln (car file-strs))))
+                       (displayln (car file-strs)))
+                   (colorize cm (if cm color-display display) lst ptrn)
                    (printf "\n\n")))
                strs)))
     (curry map
@@ -159,19 +158,17 @@ directory to search in."
                            (lambda (inf)
                              (define exp
                                `(notes
-                                 ,@(cons
-                                    (pattern)
-                                    (cons
-                                     (case-sensitivity)
-                                     (cons
-                                      (colorize-matches)
-                                      (parse-notes add-src-location-info inf))))))
+                                 ,@((compose
+                                     (curry cons (pattern))
+                                     (curry cons (case-sensitivity))
+                                     (curry cons (colorize-matches)))
+                                    (parse-notes add-src-location-info inf))))
                              (eval exp ns)))))
                (if (empty? strs)
                    (list f)
                    (list f (string-join strs "\n\n"))))))
     (lambda (filter-fun)
-      "Return a list to files to search through."
+      "Return a list of files to search through."
       (let ([all-files (for/list ([f (in-directory dir)])
                          (path->string f))])
         (filter filter-fun all-files)))
