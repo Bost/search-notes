@@ -174,5 +174,5 @@ directory to search in."
         (filter filter-fun all-files)))
     (lambda (regex)
       "Return a predicate function."
-      (lambda (f) (regexp-match (format ".*(~a).*org" regex) f))))
+      (lambda (f) (regexp-match (format ".*(~a).*\\.(org|scrbl)" regex) f))))
    (matching-files)))
