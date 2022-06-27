@@ -170,12 +170,16 @@ directory to search in."
                (if (empty? strs)
                    (list f)
                    (list f (string-join strs "\n\n"))))))
-    (lambda (filter-fun)
-      "Return a list of files to search through."
+    (lambda (predicate-filter-fun)
+      "Return a list of files forming the search space."
       (let ([all-files (for/list ([f (in-directory dir)])
                          (path->string f))])
-        (filter filter-fun all-files)))
+        (filter predicate-filter-fun all-files)))
     (lambda (regexp)
       "Return a predicate function."
-      (lambda (f) (regexp-match (format ".*(~a).*\\.(org|scrbl)" regexp) f))))
+      (lambda (f)
+        "Always exclude 'notes.scrbl' from the search space."
+        (if (equal? f (string-append dir "notes.scrbl"))
+            #f
+            (regexp-match (format ".*(~a).*\\.(org|scrbl)" regexp) f)))))
    (matching-files)))
