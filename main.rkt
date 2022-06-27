@@ -52,7 +52,7 @@
 
   (define case-sensitive "i")
   (define case-insensitive "-i")
-  ;; passed directly to the regex as a flag for case-sensitivity flag
+  ;; passed directly to the regexp as a flag for case-sensitivity flag
   (define case-sensitivity (make-parameter case-sensitive))
   (define case-sensitivity-help-text
     (format "case-sensitive `~a`~a or case-insensitive `~a`~a search."
@@ -81,10 +81,10 @@ racket main.rkt -f \"shells|linux\" -p title
    ;; TODO check if the case-sensitivity value is allowed
    ;; TODO crp: read /home/bost/dev/notes/org-roam/*utf8.org
    ;; see also .spacemacs definition
-   [("-f" "--files") REGEX
+   [("-f" "--files") REGEXP
                      "Regexp matching a list of file-names in the org-roam
 directory to search in."
-                     (matching-files REGEX)]
+                     (matching-files REGEXP)]
    [("-c" "--case-sensitivity") CS
                                 (case-sensitivity-help-text)
                                 (case-sensitivity CS)]
@@ -172,7 +172,7 @@ directory to search in."
       (let ([all-files (for/list ([f (in-directory dir)])
                          (path->string f))])
         (filter filter-fun all-files)))
-    (lambda (regex)
+    (lambda (regexp)
       "Return a predicate function."
-      (lambda (f) (regexp-match (format ".*(~a).*\\.(org|scrbl)" regex) f))))
+      (lambda (f) (regexp-match (format ".*(~a).*\\.(org|scrbl)" regexp) f))))
    (matching-files)))
