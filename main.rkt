@@ -104,6 +104,9 @@ directory to search in."
   (define ns (namespace-anchor->namespace a))
 
   ;; this is the default location of the org-roam directory
+  ;; ~/org-roam is a symbolic link at the moment:
+  ;; $ ls -l ~/org-roam
+  ;; [...] /home/bost/org-roam -> /home/bost/dev/notes/notes
   (define dir (format "~a/org-roam/" (getenv "HOME")))
 
   (define add-src-location-info #f)
