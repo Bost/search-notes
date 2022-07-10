@@ -47,22 +47,24 @@
    "notes-reader.rkt"
    ansi-color)
 
-  (define pattern (make-parameter ""))
-  (define matching-files (make-parameter ""))
+  (define pattern-param (make-parameter ""))
+  (define matching-files-param (make-parameter ""))
 
   (define case-sensitive "i")
   (define case-insensitive "-i")
-  ;; passed directly to the regexp as a flag for case-sensitivity flag
-  (define case-sensitivity (make-parameter case-sensitive))
-  (define case-sensitivity-help-text
+  ;; passed directly to the regexp as a flag for case-sensitivity-params flag
+  (define case-sensitivity-params (make-parameter case-sensitive))
+  (define case-sensitivity-params-help-text
     (format "case-sensitive `~a`~a or case-insensitive `~a`~a search."
             case-sensitive
-            (if (equal? case-sensitive (case-sensitivity)) " (default)" "")
+            (if (equal? case-sensitive (case-sensitivity-params))
+                " (default)" "")
             case-insensitive
-            (if (equal? case-sensitive (case-sensitivity)) "" " (default)")))
+            (if (equal? case-sensitive (case-sensitivity-params))
+                "" " (default)")))
 
-  (define colorize-matches (make-parameter #t))
-  (define colorize-matches-help-text
+  (define colorize-matches-param (make-parameter #t))
+  (define colorize-matches-param-help-text
     "If omitted the result is colorized")
 
   (command-line
@@ -78,22 +80,22 @@ racket main.rkt -nfp shells title
 racket main.rkt -f \"shells|linux\" -p title
 "
    #:once-each
-   ;; TODO check if the case-sensitivity value is allowed
+   ;; TODO check if the case-sensitivity-params value is allowed
    ;; TODO crp: read /home/bost/dev/notes/org-roam/*utf8.org
    ;; see also .spacemacs definition
    [("-f" "--files") REGEXP
                      "Regexp matching a list of file-names in the org-roam
 directory to search in."
-                     (matching-files REGEXP)]
-   [("-c" "--case-sensitivity") CS
-                                (case-sensitivity-help-text)
-                                (case-sensitivity CS)]
+                     (matching-files-param REGEXP)]
+   [("-c" "--case-sensitivity-params") CS
+                                (case-sensitivity-params-help-text)
+                                (case-sensitivity-params CS)]
    [("-n" "--no-colors")
-                         (colorize-matches-help-text)
-                         (colorize-matches #f)]
+                         (colorize-matches-param-help-text)
+                         (colorize-matches-param #f)]
    [("-p" "--pattern") NAME
                        "Search pattern"
-                       (pattern NAME)]
+                       (pattern-param NAME)]
 
    ;; no other arguments are accepted
    #;#;#;#:args () (void))
@@ -101,7 +103,7 @@ directory to search in."
   (define-namespace-anchor a)
   ;; the expression must be evaluated in a namespace.
   ;; Thanks to https://stackoverflow.com/q/16266934 for a hint
-  (define ns (namespace-anchor->namespace a))
+  (define namespace (namespace-anchor->namespace a))
 
   ;; this is the default location of the org-roam directory
   ;; ~/org-roam is a symbolic link at the moment:
@@ -121,52 +123,57 @@ directory to search in."
         ls
         (append (list (car ls) elem) (interpose elem (cdr ls)))))
 
-  (define (colorize cm display-fn ls pattern)
-    (match ls
+  (define (colorize colorize-matches? display-fn matches pattern)
+    (match matches
       [(list) (display-fn "")]
       [(list l) (display-fn l)]
       [_
-       (let ((txt (car ls)))
+       (let ((txt (car matches)))
          (display-fn txt)
-         (if cm
+         (if colorize-matches?
              (with-colors 'red (lambda () (color-display pattern)))
              (display pattern))
-         (colorize cm display-fn (cdr ls) pattern))]))
+         (colorize colorize-matches? display-fn (cdr matches) pattern))]))
 
   ((compose
     (lambda (_) (display ""))
     (curry map
-           (lambda (file-strs)
-             (let ((strs (cdr file-strs)))
-               (unless (empty? strs)
-                 (let* ((cm (colorize-matches))
-                        (s (string-join strs "\n"))
-                        (ptrn (pattern))
+           (lambda (all-file-strings)
+             (let ((relevant-file-strings (cdr all-file-strings)))
+               (unless (empty? relevant-file-strings)
+                 (let* ((colorize-matches? (colorize-matches-param))
+                        (pattern (pattern-param))
                         ;; TODO use regexp-match* instead of regexp-split.
                         ;; e.g. (regexp-match* #rx"(?i:x*)" "12X4x6")
-                        (lst (regexp-split (regexp
-                                            (format "(?~a:~a)"
-                                                    (case-sensitivity) ptrn))
-                                           s)))
-                   (if cm
-                       (with-colors 'white (lambda ()
-                                             (color-displayln (car file-strs))))
-                       (displayln (car file-strs)))
-                   (colorize cm (if cm color-display display) lst ptrn)
+                        (matches (regexp-split
+                                  (regexp
+                                   (format "(?~a:~a)"
+                                           (case-sensitivity-params) pattern))
+                                  (string-join relevant-file-strings "\n"))))
+                   (let ((first-file-string (car all-file-strings)))
+                     (if colorize-matches?
+                         (with-colors 'white
+                           (lambda ()
+                             (color-displayln first-file-string)))
+                         (displayln first-file-string)))
+                   (colorize colorize-matches?
+                             (if colorize-matches? color-display display)
+                             matches pattern)
                    (printf "\n\n")))
-               strs)))
+               relevant-file-strings)))
     (curry map
            (lambda (f)
              (let ((strs (call-with-input-file f
-                           (lambda (inf)
-                             (define exp
+                           (lambda (input-file)
+                             (define expression
                                `(notes
                                  ,@((compose
-                                     (curry cons (pattern))
-                                     (curry cons (case-sensitivity))
-                                     (curry cons (colorize-matches)))
-                                    (parse-notes add-src-location-info inf))))
-                             (eval exp ns)))))
+                                     (curry cons (pattern-param))
+                                     (curry cons (case-sensitivity-params))
+                                     (curry cons (colorize-matches-param)))
+                                    (parse-notes add-src-location-info
+                                                 input-file))))
+                             (eval expression namespace)))))
                (if (empty? strs)
                    (list f)
                    (list f (string-join strs "\n\n"))))))
@@ -182,4 +189,4 @@ directory to search in."
         (if (equal? f (string-append dir "notes.scrbl"))
             #f
             (regexp-match (format ".*(~a).*\\.(org|scrbl)" regexp) f)))))
-   (matching-files)))
+   (matching-files-param)))
