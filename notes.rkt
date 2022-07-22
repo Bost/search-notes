@@ -5,6 +5,9 @@
              racket/function ;; curry
              racket/syntax
              syntax/id-set))
+;; Also the `partial` from (require rackjure) can be used
+#;(require (rename-in racket/function
+                    (curry partial)))
 
 (define-syntax (notes form)
   (syntax-parse form

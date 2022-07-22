@@ -1,5 +1,8 @@
 #lang racket
 
+;; TODO try #lang hacket - haskell + racket
+;; https://lexi-lambda.github.io/hackett/index.html
+
 (module+ test
   (require rackunit
            racket/match))
@@ -80,8 +83,6 @@ racket main.rkt -nfp shells title
 racket main.rkt -f \"shells|linux\" -p title
 "
    #:once-each
-   ;; TODO check if the case-sensitivity-params value is allowed
-   ;; TODO crp: read /home/bost/dev/notes/org-roam/*utf8.org
    ;; see also .spacemacs definition
    [("-f" "--files") REGEXP
                      "Regexp matching a list of file-names in the org-roam
