@@ -123,17 +123,26 @@ directory to search in."
         ls
         (append (list (car ls) elem) (interpose elem (cdr ls)))))
 
-  (define (colorize colorize-matches? display-fn matches pattern)
+  (define (colorize colorize-matches? display-fn matches patterns)
     (match matches
       [(list) (display-fn "")]
       [(list l) (display-fn l)]
       [_
-       (let ((txt (car matches)))
+       (let ((txt (car matches))
+             (ptrn (car patterns)))
          (display-fn txt)
          (if colorize-matches?
-             (with-colors 'red (lambda () (color-display pattern)))
-             (display pattern))
-         (colorize colorize-matches? display-fn (cdr matches) pattern))]))
+             (with-colors 'red (lambda () (color-display ptrn)))
+             (display ptrn))
+         (colorize colorize-matches? display-fn
+                   (cdr matches) (cdr patterns)))]))
+
+  (define regexp-split-match
+    (regexp (format "(?~a:~a)" (case-sensitivity-params) (pattern-param))))
+
+  (define colorize-matches? (colorize-matches-param))
+
+  (define display-fn (if colorize-matches? color-display display))
 
   ((compose
     (lambda (_) (display ""))
@@ -141,24 +150,20 @@ directory to search in."
            (lambda (all-file-strings)
              (let ((relevant-file-strings (cdr all-file-strings)))
                (unless (empty? relevant-file-strings)
-                 (let* ((colorize-matches? (colorize-matches-param))
-                        (pattern (pattern-param))
-                        ;; TODO use regexp-match* instead of regexp-split.
-                        ;; e.g. (regexp-match* #rx"(?i:x*)" "12X4x6")
-                        (matches (regexp-split
-                                  (regexp
-                                   (format "(?~a:~a)"
-                                           (case-sensitivity-params) pattern))
-                                  (string-join relevant-file-strings "\n"))))
-                   (let ((first-file-string (car all-file-strings)))
-                     (if colorize-matches?
-                         (with-colors 'white
-                           (lambda ()
-                             (color-displayln first-file-string)))
-                         (displayln first-file-string)))
+                 (let ((first-file-string (car all-file-strings))
+                       (relevant-file-strings-joined
+                        (string-join relevant-file-strings "\n")))
+                   (if colorize-matches?
+                       (with-colors 'white
+                         (lambda ()
+                           (color-displayln first-file-string)))
+                       (displayln first-file-string))
                    (colorize colorize-matches?
-                             (if colorize-matches? color-display display)
-                             matches pattern)
+                             display-fn
+                             (regexp-split  regexp-split-match
+                                            relevant-file-strings-joined)
+                             (regexp-match* regexp-split-match
+                                            relevant-file-strings-joined))
                    (printf "\n\n")))
                relevant-file-strings)))
     (curry map

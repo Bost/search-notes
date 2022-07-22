@@ -20,9 +20,16 @@
                  (curry filter
                         (curry regexp-match
                                #;#px"^.*labor.*" #;#rx"^.*labor.*"
-                               (regexp (format
-                                        "(?~a:^.*~a.*)"
-                                        (syntax->datum #`case-sensitivity)
-                                        (syntax->datum #`text)))))
+                               ((compose
+                                 regexp
+                                 #;
+                                 (lambda (s)
+                                   (display (format "notes: ~a\n" s))
+                                   s))
+                                (format
+                                 ;; match the whole line containing pattern
+                                 "(?~a:^.*~a.*)"
+                                 (syntax->datum #`case-sensitivity)
+                                 (syntax->datum #`text)))))
                  (curry map syntax->datum))
                 (syntax->list #`(note ...)))))))))
