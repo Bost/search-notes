@@ -5,6 +5,7 @@ Installation:
 # Fix the 'loading code: version mismatch' error
 rm -rf ./compiled/ ./scribblings/compiled/
 raco pkg install --auto ansi-color
+mkdir ~/bin
 raco exe -o ~/bin/search-notes main.rkt
 ```
 
