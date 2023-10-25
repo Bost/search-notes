@@ -133,7 +133,8 @@ directory to search in."
              (ptrn (car patterns)))
          (display-fn txt)
          (if colorize-matches?
-             (with-colors 'red (lambda () (color-display ptrn)))
+             ;; b-red means 'bold and red'
+             (with-colors 'b-red (lambda () (color-display ptrn)))
              (display ptrn))
          (colorize colorize-matches? display-fn
                    (cdr matches) (cdr patterns)))]))
@@ -155,7 +156,7 @@ directory to search in."
                        (relevant-file-strings-joined
                         (string-join relevant-file-strings "\n")))
                    (if colorize-matches?
-                       (with-colors 'white
+                       (with-colors 'magenta
                          (lambda ()
                            (color-displayln first-file-string)))
                        (displayln first-file-string))
