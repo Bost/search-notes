@@ -1,12 +1,14 @@
 search-notes
 ============
 Installation:
-```shell
+```bash
 # Fix the 'loading code: version mismatch' error
 rm -rf ./compiled/ ./scribblings/compiled/
 raco pkg install --auto ansi-color
-mkdir ~/bin
-raco exe -o ~/bin/search-notes main.rkt
+command -v guix && destDir=$dotf/bin || destDir=~/bin
+[ ! -d $destDir ] && mkdir $destDir
+raco exe -o $destDir/search-notes main.rkt
+# gxhre --cores=24
 ```
 
 See main.rkt -> command-line -> #:usage-help
