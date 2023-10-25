@@ -51,6 +51,7 @@
    ansi-color)
 
   (define pattern-param (make-parameter ""))
+  (define filepaths-param (make-parameter ""))
   (define matching-files-param (make-parameter ""))
 
   (define case-sensitive "i")
@@ -81,9 +82,16 @@ racket main.rkt -fp shells title
 racket main.rkt -n f shells -p title
 racket main.rkt -nfp shells title
 racket main.rkt -f \"shells|linux\" -p title
+racket main.rkt -f \"lisp/racket\" -p rackjure
+racket main.rkt -f \"lisp/racket\" -e \"/home/bost/der/search-notes/main.rkt /home/bost/der/search-notes/README.md\" -p subdir
 "
+
    #:once-each
    ;; see also .spacemacs definition
+   [("-e" "--exact-filepaths")
+    FILEPATHS
+    "List of exact filepaths on the file system."
+    (filepaths-param FILEPATHS)]
    [("-f" "--files") REGEXP
                      "Regexp matching a list of file-names in the org-roam
 directory to search in."
@@ -184,6 +192,8 @@ directory to search in."
                (if (empty? strs)
                    (list f)
                    (list f (string-join strs "\n\n"))))))
+    ;; (lambda (files) (printf "files:\n~a\n" files) files)
+    (curry append (string-split (filepaths-param)))
     (lambda (predicate-filter-fun)
       "Return a list of files forming the search space."
       (let ([all-files (for/list ([f (in-directory dir)])
