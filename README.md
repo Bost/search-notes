@@ -1,14 +1,15 @@
 search-notes
 ============
-Installation:
+Installation: run `make`. See also Makefile.
 ```bash
 # Fix the 'loading code: version mismatch' error
 rm -rf ./compiled/ ./scribblings/compiled/
 raco pkg install --auto ansi-color
-command -v guix && destDir=$dotf/bin || destDir=~/bin
-[ ! -d $destDir ] && mkdir $destDir
+isGuix=$(command -v guix > /dev/null 2>&1 && echo t || echo f)
+[ ${isGuix} = t ] && destDir=$dotf/bin || destDir=~/bin
+[ ! -d ${destDir} ] && mkdir $destDir || :
 raco exe -o $destDir/search-notes main.rkt
-# gxhre --cores=24
+[ ${isGuix} = t ] && gxhre --cores=${cores} || :
 ```
 
 See main.rkt -> command-line -> #:usage-help
