@@ -52,7 +52,6 @@
 
   (define pattern-param (make-parameter ""))
   (define filepaths-param (make-parameter ""))
-  (define matching-files-param (make-parameter ""))
 
   (define case-sensitive "i")
   (define case-insensitive "-i")
@@ -77,13 +76,11 @@
    #:usage-help
    "Search in note-file(s) for a pattern. Return note-block(s).
 E.g.:
-racket main.rkt -f shells -p title
-racket main.rkt -fp shells title
-racket main.rkt -n f shells -p title
-racket main.rkt -nfp shells title
-racket main.rkt -f \"shells|linux\" -p title
-racket main.rkt -f \"lisp/racket\" -p rackjure
-racket main.rkt -f \"lisp/racket\" -e \"/home/bost/der/search-notes/main.rkt /home/bost/der/search-notes/README.md\" -p subdir
+racket main.rkt -p title
+racket main.rkt -n -p title
+racket main.rkt -np title
+racket main.rkt -p rackjure
+racket main.rkt -e \"/home/bost/der/search-notes/main.rkt /home/bost/der/search-notes/README.md\" -p subdir
 "
 
    #:once-each
@@ -92,10 +89,6 @@ racket main.rkt -f \"lisp/racket\" -e \"/home/bost/der/search-notes/main.rkt /ho
     FILEPATHS
     "List of exact filepaths on the file system."
     (filepaths-param FILEPATHS)]
-   [("-f" "--files") REGEXP
-                     "Regexp matching a list of file-names in the org-roam
-directory to search in."
-                     (matching-files-param REGEXP)]
    [("-c" "--case-sensitivity-params") CS
                                 (case-sensitivity-params-help-text)
                                 (case-sensitivity-params CS)]
@@ -193,17 +186,5 @@ directory to search in."
                    (list f)
                    (list f (string-join strs "\n\n"))))))
     ;; (lambda (files) (printf "files:\n~a\n" files) files)
-    (curry append (string-split (filepaths-param)))
-    (lambda (predicate-filter-fun)
-      "Return a list of files forming the search space."
-      (let ([all-files (for/list ([f (in-directory dir)])
-                         (path->string f))])
-        (filter predicate-filter-fun all-files)))
-    (lambda (regexp)
-      "Return a predicate function."
-      (lambda (f)
-        "Always exclude 'notes.scrbl' from the search space."
-        (if (equal? f (string-append dir "notes.scrbl"))
-            #f
-            (regexp-match (format ".*(~a).*\\.(org|scrbl)" regexp) f)))))
-   (matching-files-param)))
+    string-split)
+   (filepaths-param)))
