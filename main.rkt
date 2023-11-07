@@ -107,10 +107,7 @@ racket main.rkt -e \"/home/bost/der/search-notes/main.rkt /home/bost/der/search-
   ;; Thanks to https://stackoverflow.com/q/16266934 for a hint
   (define namespace (namespace-anchor->namespace a))
 
-  ;; this is the default location of the org-roam directory
-  ;; ~/org-roam is a symbolic link at the moment:
-  ;; $ ls -l ~/org-roam
-  ;; [...] /home/bost/org-roam -> /home/bost/dev/notes/notes
+  ;; This is the default location of the org-roam directory. See Makefile
   (define dir (format "~a/org-roam/" (getenv "HOME")))
 
   (define add-src-location-info #f)

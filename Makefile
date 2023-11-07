@@ -4,8 +4,10 @@
 # the 'export' seems not to be necessary
 $(eval isGuix := $(shell command -v guix > /dev/null 2>&1 && echo t || echo f))
 $(eval destDir := $(shell [ "${isGuix}" = t ] && echo $${dotf}/bin || echo ~/bin))
+orgRoamLink := ${HOME}/org-roam
 
 all: show-environment clean install-deps
+	[ ! -L "${orgRoamLink}" ] && ln -s ${dev}/notes/notes "${orgRoamLink}" || :
 	[ ! -d ${destDir} ] && mkdir ${destDir} || :
 	raco exe -o ${destDir}/search-notes main.rkt
 	[ "${isGuix}" = t ] && gxhre --cores=${cores} || :
