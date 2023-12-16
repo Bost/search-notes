@@ -80,6 +80,7 @@ racket main.rkt -p title
 racket main.rkt -n -p title
 racket main.rkt -np title
 racket main.rkt -p rackjure
+racket main.rkt -e ./main.rkt -p [[:blank:]]install([[:cntrl:]]|[[:blank:]])
 racket main.rkt -e \"/home/bost/der/search-notes/main.rkt /home/bost/der/search-notes/README.md\" -p subdir
 "
 
@@ -137,8 +138,11 @@ racket main.rkt -e \"/home/bost/der/search-notes/main.rkt /home/bost/der/search-
          (colorize colorize-matches? display-fn
                    (cdr matches) (cdr patterns)))]))
 
+  ;; - For regexp vs. pregexp - the same must be used also in notes.rkt;
+  ;; - In contrary to the regexp-defining string in the notes.rkt no '.*' must
+  ;;   be used.
   (define regexp-split-match
-    (regexp (format "(?~a:~a)" (case-sensitivity-params) (pattern-param))))
+    (pregexp (format "(?~a:~a)" (case-sensitivity-params) (pattern-param))))
 
   (define colorize-matches? (colorize-matches-param))
 

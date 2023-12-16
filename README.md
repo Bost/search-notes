@@ -24,4 +24,5 @@ TODO Two search patterns means
 
 TODO Find org-mode racket parser / language: https://github.com/tgbugs/laundry
 
-TODO search in subdirectories
+For word boundaries etc. see:
+https://docs.racket-lang.org/guide/regexp-chars.html#%28part._.P.O.S.I.X_character_classes%29

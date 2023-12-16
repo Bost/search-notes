@@ -20,11 +20,21 @@
        #`(begin
            '(#,@((compose
                  (curry map bytes->string/utf-8)
+                 #;
+                 (lambda (s)
+                   (display (format "matches: ~a\n" s))
+                   s)
                  (curry filter
                         (curry regexp-match
                                #;#px"^.*labor.*" #;#rx"^.*labor.*"
                                ((compose
-                                 regexp
+                                 ;; See also the regexp-split-match in the main.rkt
+                                 #;
+                                 (lambda (s)
+                                   (display (format "notes: ~a\n" s))
+                                   s)
+                                 ;; regexp   ;; #rx
+                                 pregexp  ;; #px - posix
                                  #;
                                  (lambda (s)
                                    (display (format "notes: ~a\n" s))
