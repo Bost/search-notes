@@ -19,8 +19,10 @@
   (define note (parse-note src in))
   (if (eof-object? note)
       '()
-      (cons note
-            (parse-notes src in))))
+      (let [(notes (parse-notes src in))]
+        ;; (printf "vvvvvvvvvvv note:\n~a\n^^^^^^^^^^^^^^^^^\n" note)
+        ;; (printf "vvvvvvvvvvv notes:\n~a\n^^^^^^^^^^^^^^^^^\n\n" notes)
+        (cons note notes))))
 
 (define (parse-note src in)
   ;; Don't remove whitespace for better formatting (column alignment)

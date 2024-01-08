@@ -3,10 +3,6 @@
 ;; TODO try #lang hacket - haskell + racket
 ;; https://lexi-lambda.github.io/hackett/index.html
 
-(module+ test
-  (require rackunit
-           racket/match))
-
 ;; Notice
 ;; To install (from within the package directory):
 ;;   $ raco pkg install
@@ -27,28 +23,82 @@
 ;; See the current version of the racket style guide here:
 ;; http://docs.racket-lang.org/style/index.html
 
-;; Code here
-
-
-
-(module+ test
-  ;; Any code in this `test` submodule runs when this file is run using DrRacket
-  ;; or with `raco test`. The code here does not run when this file is
-  ;; required by another module.
-
-  (check-equal? (+ 2 2) 4))
-
 (module+ main
   ;; (Optional) main submodule. Put code here if you need it to be executed when
   ;; this file is run using DrRacket or the `racket` executable.  The code here
   ;; does not run when this file is required by another module. Documentation:
   ;; http://docs.racket-lang.org/guide/Module_Syntax.html#%28part._main-and-test%29
 
+  (provide
+   create-pattern-with-diacritics
+   create-regexp-split-match
+   regexp-normalize-match*
+   regexp-normalize-split)
+  
   (require
    ;; (prefix-in com: "common.rkt")
    "notes.rkt" ;; is used indeed
    "notes-reader.rkt"
-   ansi-color)
+   ansi-color
+
+  ;; for string-replace
+  racket/string
+  )
+
+  (define diacritic-map
+    (hash "a" "[aáäàâæ]"
+          "c" "[cčç]"
+          "d" "[dď]"
+          "e" "[eéèêë]"
+          "i" "[iíîï]"
+          "l" "[lĺľ]"
+          "n" "[nň]"
+          "o" "[oóôöœ]"
+          "r" "[rŕř]"
+          "s" "[sš]"
+          "t" "[tť]"
+          "u" "[uúûüù]"
+          "y" "[yý]"
+          "z" "[zž]"
+          "A" "[AÁÄÀÂÆ]"
+          "C" "[CČÇ]"
+          "D" "[DĎ]"
+          "E" "[EÉÈÊË]"
+          "I" "[IÍÎÏ]"
+          "L" "[LĹĽ]"
+          "N" "[NŇ]"
+          "O" "[OÓÔÖŒ]"
+          "R" "[RŔŘ]"
+          "S" "[SŠ]"
+          "T" "[TŤ]"
+          "U" "[UÚÛÜÙ]"
+          "Y" "[YÝ]"
+          "Z" "[ZŽ]"
+          "ß" "ß")) ; German sharp S
+
+  (define (string-normalize s)
+    ;; Normalization Form C, Canonical Decomposition followed by Canonical
+    ;; Composition:
+    ;; Decompose characters and then recomposes them using canonical
+    ;; equivalence. E.g., 'é' would first be split into 'e' and the combining
+    ;; accent, and then recomposed back into 'é'.
+    ;; Use this when you want to normalize characters to their composed forms
+    ;; while still respecting canonical equivalence.
+    (string-normalize-nfc s))
+
+  (define (regexp-normalize-match* regex target-str)
+    ;; (printf "[regexp-normalize-match*] regex: ~a\n" regex)
+    ;; (printf "[regexp-normalize-match*] target-str : ~a\n" target-str)
+    (let* ((normalized-target (string-normalize target-str)))
+      ;; (printf "[regexp-normalize-match*] normalized-target: ~a\n" normalized-target)
+      (regexp-match* regex normalized-target)))
+
+  (define (regexp-normalize-split regex target-str)
+    ;; (printf "[regexp-normalize-split] regex: ~a\n" regex)
+    ;; (printf "[regexp-normalize-split] target-str : ~a\n" target-str)
+    (let* ((normalized-target (string-normalize target-str)))
+      ;; (printf "[regexp-normalize-split] normalized-target: ~a\n" normalized-target)
+      (regexp-split regex normalized-target)))
 
   (define pattern-param (make-parameter ""))
   (define filepaths-param (make-parameter ""))
@@ -81,6 +131,8 @@ racket main.rkt -n -p title
 racket main.rkt -np title
 racket main.rkt -p rackjure
 racket main.rkt -e ./main.rkt -p [[:blank:]]install([[:cntrl:]]|[[:blank:]])
+racket main.rkt -e ./main.rkt -p \"[eeeee]\"
+racket main.rkt -e ./main.rkt -p \"[eéèêë]\"
 racket main.rkt -e \"/home/bost/der/search-notes/main.rkt /home/bost/der/search-notes/README.md\" -p subdir
 "
 
@@ -138,11 +190,31 @@ racket main.rkt -e \"/home/bost/der/search-notes/main.rkt /home/bost/der/search-
          (colorize colorize-matches? display-fn
                    (cdr matches) (cdr patterns)))]))
 
+  (define (create-pattern-with-diacritics pattern)
+    (string-append*
+     (map (lambda (char)
+            (hash-ref diacritic-map (string char) (string char)))
+          (string->list pattern))))
+
+  (define pattern-with-diacritics (create-pattern-with-diacritics (pattern-param)))
+
   ;; - For regexp vs. pregexp - the same must be used also in notes.rkt;
   ;; - In contrary to the regexp-defining string in the notes.rkt no '.*' must
   ;;   be used.
-  (define regexp-split-match
-    (pregexp (format "(?~a:~a)" (case-sensitivity-params) (pattern-param))))
+  (define (create-regexp-split-match case-sensitivity diacritic-pattern)
+    ;; (printf "case-sensitivity : ~a\n" case-sensitivity)
+    ;; (printf "diacritic-pattern : ~a\n" diacritic-pattern)
+    ;; (printf "pattern : ~a\n" pattern)
+    (let* [
+           (rgx (pregexp (format "(?~a:~a)"
+                                 case-sensitivity diacritic-pattern)))]
+      ;; (printf "diacritic-pattern : ~a\n" diacritic-pattern)
+      ;; (printf "rgx : ~a\n" rgx)
+      rgx))
+
+  (define regexp-split-match (create-regexp-split-match
+                              (case-sensitivity-params)
+                              pattern-with-diacritics))
 
   (define colorize-matches? (colorize-matches-param))
 
@@ -152,7 +224,10 @@ racket main.rkt -e \"/home/bost/der/search-notes/main.rkt /home/bost/der/search-
     (lambda (_) (display ""))
     (curry map
            (lambda (all-file-strings)
-             (let ((relevant-file-strings (cdr all-file-strings)))
+             ;; (printf "all-file-strings : ~a\n" all-file-strings)
+             (let [(relevant-file-strings (cdr all-file-strings))]
+               ;; (printf "relevant-file-strings : ~a\n" relevant-file-strings)
+               ;; (printf "(empty? relevant-file-strings) : ~a\n" (empty? relevant-file-strings))
                (unless (empty? relevant-file-strings)
                  (let ((first-file-string (car all-file-strings))
                        (relevant-file-strings-joined
@@ -164,28 +239,37 @@ racket main.rkt -e \"/home/bost/der/search-notes/main.rkt /home/bost/der/search-
                        (displayln first-file-string))
                    (colorize colorize-matches?
                              display-fn
-                             (regexp-split  regexp-split-match
-                                            relevant-file-strings-joined)
-                             (regexp-match* regexp-split-match
-                                            relevant-file-strings-joined))
+                             (regexp-normalize-split
+                              regexp-split-match relevant-file-strings-joined)
+                             (regexp-normalize-match*
+                              regexp-split-match relevant-file-strings-joined))
                    (printf "\n\n")))
                relevant-file-strings)))
+    ;; (lambda (files) (printf "1. files:\n~a\n" files) files)
     (curry map
            (lambda (f)
              (let ((strs (call-with-input-file f
                            (lambda (input-file)
+                             ;; (printf "1. input-file:\n~a\n" input-file)
                              (define expression
                                `(notes
                                  ,@((compose
-                                     (curry cons (pattern-param))
+                                     ;; (lambda (p) (printf "13. ~a\n" p) p)
+                                     (curry cons pattern-with-diacritics)
+                                     ;; (lambda (p) (printf "12. ~a\n" p) p)
                                      (curry cons (case-sensitivity-params))
-                                     (curry cons (colorize-matches-param)))
+                                     ;; (lambda (p) (printf "11. ~a\n" p) p)
+                                     (curry cons (colorize-matches-param))
+                                     ;; (lambda (p) (printf "10. ~a\n" p) p)
+                                     )
                                     (parse-notes add-src-location-info
                                                  input-file))))
+                             ;; (printf "1. expression:\n~a\n" expression)
+                             ;; (printf "1. namespace:\n~a\n" namespace)
                              (eval expression namespace)))))
                (if (empty? strs)
                    (list f)
                    (list f (string-join strs "\n\n"))))))
-    ;; (lambda (files) (printf "files:\n~a\n" files) files)
+    ;; (lambda (files) (printf "0. files:\n~a\n" files) files)
     string-split)
    (filepaths-param)))

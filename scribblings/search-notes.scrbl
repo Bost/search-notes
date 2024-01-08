@@ -1,5 +1,6 @@
 #lang scribble/manual
-@require[@for-label[search-notes
+@require[@for-label[
+                    ;; search-notes
                     racket/base]]
 
 @title{search-notes}

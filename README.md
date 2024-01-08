@@ -5,6 +5,7 @@ Installation: run `make`. See also Makefile.
 # Fix the 'loading code: version mismatch' error
 rm -rf ./compiled/ ./scribblings/compiled/
 raco pkg install --auto ansi-color
+# raco test ./  # optionally
 isGuix=$(command -v guix > /dev/null 2>&1 && echo t || echo f)
 [ ${isGuix} = t ] && destDir=$dotf/bin || destDir=~/bin
 [ ! -d ${destDir} ] && mkdir $destDir || :
