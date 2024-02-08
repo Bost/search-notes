@@ -102,6 +102,7 @@
 
   (define pattern-param (make-parameter ""))
   (define filepaths-param (make-parameter ""))
+  (define filepath-param (make-parameter (list)))
 
   (define case-sensitive "i")
   (define case-insensitive "-i")
@@ -136,12 +137,17 @@ racket main.rkt -e ./main.rkt -p \"[eeeee]\"
 racket main.rkt -e ./main.rkt -p \"[eéèêë]\"
 racket main.rkt -e \"/home/bost/der/search-notes/main.rkt /home/bost/der/search-notes/README.md\" -p subdir
 "
+   #:multi
+   [("-f" "--filepath")
+    FILEPATH
+    "Exact filepath on the file system."
+    (filepath-param (cons FILEPATH (filepath-param)))]
 
    #:once-each
    ;; see also .spacemacs definition
    [("-e" "--exact-filepaths")
     FILEPATHS
-    "List of exact filepaths on the file system."
+    "String of exact filepaths on the file system, separated by spaces."
     (filepaths-param FILEPATHS)]
    [("-c" "--case-sensitivity-params") CS
                                 (case-sensitivity-params-help-text)
@@ -246,7 +252,7 @@ racket main.rkt -e \"/home/bost/der/search-notes/main.rkt /home/bost/der/search-
                               regexp-split-match relevant-file-strings-joined))
                    (printf "\n\n")))
                relevant-file-strings)))
-    ;; (lambda (files) (printf "1. files:\n~a\n" files) files)
+    ;; (lambda (files) (printf "3. files:\n~a\n" files) files)
     (curry map
            (lambda (f)
              (let ((strs (call-with-input-file f
@@ -271,6 +277,25 @@ racket main.rkt -e \"/home/bost/der/search-notes/main.rkt /home/bost/der/search-
                (if (empty? strs)
                    (list f)
                    (list f (string-join strs "\n\n"))))))
+    ;; (lambda (files) (printf "2. files:\n~a\n" files) files)
+    remove-duplicates
+    ;; environment variable in the path is expanded by the shell
+    (curry map (compose
+                ;; - Unix and Mac OS: convert by decoding path’s byte-string
+                ;;                    encoding using the current locale
+                ;; - Windows: convert by using UTF-8
+                ;; path->string
+
+                ;; convert by using a UTF-8 encoding
+                some-system-path->string
+
+                ;; handle up- or same-directory indicators
+                simple-form-path
+
+                ;; convert tilda '~'
+                expand-user-path))
+    ;; (lambda (files) (printf "1. files:\n~a\n" files) files)
+    (curry append (filepath-param))
     ;; (lambda (files) (printf "0. files:\n~a\n" files) files)
     string-split)
    (filepaths-param)))
