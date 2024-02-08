@@ -130,6 +130,7 @@ racket main.rkt -p title
 racket main.rkt -n -p title
 racket main.rkt -np title
 racket main.rkt -p rackjure
+racket main.rkt -e ./main.rkt -p \"\\bfile\\b\" # \\b match word boundaries
 racket main.rkt -e ./main.rkt -p [[:blank:]]install([[:cntrl:]]|[[:blank:]])
 racket main.rkt -e ./main.rkt -p \"[eeeee]\"
 racket main.rkt -e ./main.rkt -p \"[eéèêë]\"
@@ -252,7 +253,7 @@ racket main.rkt -e \"/home/bost/der/search-notes/main.rkt /home/bost/der/search-
                            (lambda (input-file)
                              ;; (printf "1. input-file:\n~a\n" input-file)
                              (define expression
-                               `(notes
+                               `(notes-syntax-parser
                                  ,@((compose
                                      ;; (lambda (p) (printf "13. ~a\n" p) p)
                                      (curry cons pattern-with-diacritics)

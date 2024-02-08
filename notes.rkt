@@ -1,5 +1,5 @@
 #lang racket
-(provide notes)
+(provide notes-syntax-parser)
 (require
  (for-syntax syntax/parse
              racket/function ;; curry
@@ -9,9 +9,9 @@
 #;(require (rename-in racket/function
                     (curry partial)))
 
-(define-syntax (notes form)
+(define-syntax (notes-syntax-parser form)
   (syntax-parse form
-    ((notes
+    ((notes-syntax-parser
       text:string
       case-sensitivity:string
       colorize-matches:boolean

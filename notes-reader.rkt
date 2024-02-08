@@ -1,14 +1,18 @@
 #lang racket
-(provide (rename-out (notes-read-syntax read-syntax))
+(provide (rename-out
+          ;; Every reader must export a read-syntax function.
+          (notes-read-syntax read-syntax))
          parse-notes)
 (require syntax/readerr)
 
+;; A read-syntax must return code describing a module, packaged as a syntax
+;; object.
 (define (notes-read-syntax src in)
   (datum->syntax
    #f
    `(module notes racket
       (require "notes.rkt")
-      (notes
+      (notes-syntax-parser
        ,@(parse-notes src in)))))
 
 ;; `src` - context information about what file this code resides in. The value
